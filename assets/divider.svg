@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 14" width="1200" height="14" role="img" aria-label="section divider" preserveAspectRatio="none">
+  <defs>
+    <pattern id="chk" width="16" height="8" patternUnits="userSpaceOnUse">
+      <rect width="16" height="8" fill="#0a0b0e"/>
+      <rect width="8" height="4" fill="#ffffff"/><rect x="8" y="4" width="8" height="4" fill="#ffffff"/>
+    </pattern>
+    <linearGradient id="fade" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#08090c"/><stop offset=".18" stop-color="#08090c" stop-opacity="0"/>
+      <stop offset=".82" stop-color="#08090c" stop-opacity="0"/><stop offset="1" stop-color="#08090c"/>
+    </linearGradient>
+  </defs>
+  <rect x="0" y="4" width="1200" height="8" fill="url(#chk)"/>
+  <rect x="0" y="4" width="1200" height="8" fill="url(#fade)"/>
+  <rect x="0" y="0" width="1200" height="2.5" fill="#E2001A"/>
+</svg>

@@ -1,36 +1,106 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 260" width="1200" height="260" role="img" aria-label="Scuderia — a stable of engineering agents, brief one, ship with the crew">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 300" width="1200" height="300" role="img" aria-label="Scuderia — six roles, one pit wall; delegate, build, verify">
   <defs>
-    <linearGradient id="g" x1="0" y1="0" x2="0" y2="1">
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#17070b"/><stop offset=".45" stop-color="#0b0c10"/><stop offset="1" stop-color="#0a0b0f"/>
+    </linearGradient>
+    <radialGradient id="spot" cx="0.74" cy="0.62" r="0.5">
+      <stop offset="0" stop-color="#3a1418" stop-opacity=".8"/><stop offset="1" stop-color="#3a1418" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="floor" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1c1f26"/><stop offset="1" stop-color="#0c0d11"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0" stop-color="#FFE07A"/><stop offset="1" stop-color="#E9A400"/>
     </linearGradient>
-    <linearGradient id="mb" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#141014"/><stop offset=".5" stop-color="#0a0b0e"/><stop offset="1" stop-color="#1c0409"/>
+    <linearGradient id="rosso" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#C10018"/><stop offset=".55" stop-color="#E2001A"/><stop offset="1" stop-color="#FF3B1F"/>
+    </linearGradient>
+    <linearGradient id="streak" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#FF2800" stop-opacity="0"/><stop offset="1" stop-color="#FF3B1F" stop-opacity=".9"/>
     </linearGradient>
     <pattern id="chk" width="24" height="12" patternUnits="userSpaceOnUse">
       <rect width="24" height="12" fill="#0a0b0e"/>
       <rect width="12" height="6" fill="#ffffff"/><rect x="12" y="6" width="12" height="6" fill="#ffffff"/>
     </pattern>
-    <clipPath id="arc"><path d="M79,130 A71,71 0 0 1 221,130 Z"/></clipPath>
+    <clipPath id="arc"><path d="M69,138 A71,71 0 0 1 211,138 Z"/></clipPath>
   </defs>
 
-  <rect width="1200" height="260" fill="url(#mb)"/>
-  <text x="1060" y="238" text-anchor="middle" font-family="'Arial Narrow',Arial,sans-serif" font-style="italic" font-weight="800" font-size="300" fill="#ffffff" opacity="0.05">5</text>
+  <!-- backdrop -->
+  <rect width="1200" height="300" fill="url(#bg)"/>
+  <rect width="1200" height="300" fill="url(#spot)"/>
+  <g stroke="#ffffff" stroke-width="1" opacity="0.04">
+    <line x1="40" y1="60" x2="1160" y2="60"/><line x1="40" y1="86" x2="1160" y2="86"/><line x1="40" y1="112" x2="1160" y2="112"/>
+  </g>
 
-  <!-- roundel -->
-  <circle cx="150" cy="130" r="71" fill="#0d0d0f"/>
-  <circle cx="150" cy="130" r="71" fill="none" stroke="url(#g)" stroke-width="3"/>
-  <circle cx="150" cy="130" r="63" fill="none" stroke="url(#g)" stroke-width="1" opacity="0.5"/>
-  <g clip-path="url(#arc)"><rect x="79" y="59" width="142" height="71" fill="url(#chk)" opacity="0.9"/></g>
-  <text x="150" y="167" text-anchor="middle" font-family="'Arial Narrow',Helvetica,Arial,sans-serif" font-style="italic" font-weight="800" font-size="95" fill="url(#g)">S</text>
+  <!-- track floor the car sits on -->
+  <rect x="640" y="250" width="560" height="38" fill="url(#floor)"/>
+  <rect x="640" y="250" width="560" height="1.5" fill="#3a3d44" opacity=".7"/>
 
-  <!-- tricolore -->
-  <rect x="392" y="52" width="46" height="8" fill="#00913A"/><rect x="438" y="52" width="46" height="8" fill="#F2F3F0"/><rect x="484" y="52" width="46" height="8" fill="#CD2130"/>
+  <!-- big number 5 watermark (Vettel nod) -->
+  <text x="930" y="250" text-anchor="middle" font-family="Arial,sans-serif" font-style="italic" font-weight="800" font-size="300" fill="#ffffff" opacity="0.045">5</text>
 
-  <!-- wordmark -->
-  <text x="388" y="150" font-family="'Arial Narrow',Helvetica,Arial,sans-serif" font-style="italic" font-weight="800" font-size="96" letter-spacing="5" fill="#ffffff">SCUDERIA</text>
-  <rect x="392" y="168" width="440" height="3" fill="#E2001A"/>
-  <text x="394" y="200" font-family="-apple-system,Helvetica,Arial,sans-serif" font-size="23" fill="#f2f3f0" opacity="0.92">a stable of engineering agents — brief one, ship with the crew</text>
-  <text x="394" y="232" font-family="'SF Mono',Menlo,monospace" font-size="17" fill="#FFC400" letter-spacing="1.5">// delegate · build · verify — Forza Ferrari</text>
+  <!-- ===== roundel ===== -->
+  <g>
+    <circle cx="140" cy="138" r="71" fill="#0d0d0f"/>
+    <circle cx="140" cy="138" r="71" fill="none" stroke="url(#gold)" stroke-width="3"/>
+    <circle cx="140" cy="138" r="63" fill="none" stroke="url(#gold)" stroke-width="1" opacity="0.5"/>
+    <g clip-path="url(#arc)"><rect x="69" y="67" width="142" height="71" fill="url(#chk)" opacity="0.9"/></g>
+    <text x="140" y="175" text-anchor="middle" font-family="Arial,sans-serif" font-style="italic" font-weight="800" font-size="92" fill="url(#gold)">S</text>
+  </g>
 
-  <rect x="0" y="248" width="1200" height="12" fill="url(#chk)"/>
+  <!-- ===== wordmark block (textLength = overflow-proof) ===== -->
+  <rect x="252" y="60" width="40" height="7" fill="#00913A"/><rect x="292" y="60" width="40" height="7" fill="#F2F3F0"/><rect x="332" y="60" width="40" height="7" fill="#CD2130"/>
+  <text x="250" y="150" font-family="Arial,Helvetica,sans-serif" font-style="italic" font-weight="800" font-size="84" letter-spacing="2" fill="#ffffff" textLength="388" lengthAdjust="spacingAndGlyphs">SCUDERIA</text>
+  <rect x="252" y="168" width="388" height="3" fill="#E2001A"/>
+  <text x="252" y="203" font-family="Arial,Helvetica,sans-serif" font-weight="700" font-size="22" fill="#f2f3f0" opacity="0.95" textLength="300" lengthAdjust="spacingAndGlyphs">Six roles, one pit wall.</text>
+  <text x="252" y="234" font-family="'SF Mono',Menlo,Consolas,monospace" font-size="16" fill="#FFC400" letter-spacing="1" textLength="330" lengthAdjust="spacingAndGlyphs">// delegate · build · verify</text>
+
+  <!-- ===== F1 car hero (right) ===== -->
+  <g transform="translate(682,112) scale(1.05)">
+    <!-- shadow -->
+    <ellipse cx="228" cy="150" rx="220" ry="9" fill="#000000" opacity="0.45"/>
+    <!-- motion streaks -->
+    <rect x="-34" y="86" width="130" height="4" rx="2" fill="url(#streak)"/>
+    <rect x="-16" y="100" width="165" height="5" rx="2.5" fill="url(#streak)" opacity=".85"/>
+    <rect x="-52" y="116" width="185" height="4" rx="2" fill="url(#streak)" opacity=".55"/>
+
+    <!-- rear wing -->
+    <rect x="8" y="44" width="80" height="8" rx="2" fill="url(#rosso)"/>
+    <rect x="12" y="44" width="8" height="42" fill="#9E0014"/>
+
+    <!-- body -->
+    <path d="M24,58 L82,54 L78,72
+             C120,64 160,56 184,50 L198,50 L206,64
+             C222,56 250,54 266,66
+             L332,86 L402,99 L446,103 L446,111 L80,111 Z"
+          fill="url(#rosso)" stroke="#6E0010" stroke-width="1.5"/>
+    <!-- top rim light -->
+    <path d="M26,58 L82,55 C130,62 175,52 198,51" fill="none" stroke="#FF6A4A" stroke-width="1.5" opacity=".7"/>
+    <!-- gold pinstripe -->
+    <path d="M40,92 C160,80 300,86 424,103" fill="none" stroke="#FFC400" stroke-width="2.5" opacity=".9"/>
+
+    <!-- sidepod number -->
+    <circle cx="150" cy="86" r="16" fill="#ffffff"/>
+    <text x="150" y="94" text-anchor="middle" font-family="Arial,sans-serif" font-style="italic" font-weight="800" font-size="22" fill="#E2001A">5</text>
+
+    <!-- halo + helmet -->
+    <path d="M206,64 C214,40 260,40 266,66" fill="none" stroke="#0d0d0f" stroke-width="7" stroke-linecap="round"/>
+    <circle cx="236" cy="58" r="9" fill="#15171c"/>
+
+    <!-- front wing -->
+    <rect x="404" y="105" width="52" height="7" rx="2" fill="url(#rosso)"/>
+    <rect x="432" y="97" width="24" height="6" rx="2" fill="#9E0014"/>
+
+    <!-- wheels -->
+    <g>
+      <circle cx="108" cy="112" r="34" fill="#141619"/><circle cx="108" cy="112" r="34" fill="none" stroke="#40434b" stroke-width="3"/>
+      <circle cx="108" cy="112" r="13" fill="#26292f"/><circle cx="108" cy="112" r="4" fill="#5a5d64"/>
+    </g>
+    <g>
+      <circle cx="370" cy="112" r="34" fill="#141619"/><circle cx="370" cy="112" r="34" fill="none" stroke="#40434b" stroke-width="3"/>
+      <circle cx="370" cy="112" r="13" fill="#26292f"/><circle cx="370" cy="112" r="4" fill="#5a5d64"/>
+    </g>
+  </g>
+
+  <rect x="0" y="288" width="1200" height="12" fill="url(#chk)"/>
 </svg>

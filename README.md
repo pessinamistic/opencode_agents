@@ -1,13 +1,13 @@
 <div align="center">
 
-<img src="assets/banner.svg" alt="Scuderia — a stable of engineering agents; brief one, ship with the crew" width="100%">
+<img src="assets/banner.svg" alt="Scuderia — six roles, one pit wall; delegate, build, verify" width="100%">
 
 # Scuderia
 
 **Six roles, one pit wall.** &nbsp;·&nbsp; *Essere Ferrari.*
 
 [![license](https://img.shields.io/badge/license-MIT-FFC400?style=flat-square)](LICENSE)
-[![CI](https://img.shields.io/github/actions/workflow/status/pessinamistic/scuderia/ci.yml?style=flat-square&label=CI&color=00913A)](.github/workflows/ci.yml)
+[![CI](https://img.shields.io/github/actions/workflow/status/pessinamistic/pitwall/ci.yml?style=flat-square&label=CI&color=00913A)](.github/workflows/ci.yml)
 ![harnesses](https://img.shields.io/badge/harnesses-4-E2001A?style=flat-square)
 ![node](https://img.shields.io/badge/node-%E2%89%A5%2020-6b6d76?style=flat-square)
 ![deps](https://img.shields.io/badge/deps-zero-E2001A?style=flat-square)
@@ -40,7 +40,13 @@ Rosso Corsa flavor aside, the hierarchy below is the same shape Maranello
 would recognize: a Race Engineer calling strategy, a Technical Director for
 the hard calls, and a garage crew that executes.
 
+<img src="assets/divider.svg" alt="" width="100%">
+
 ## The team
+
+<div align="center">
+<img src="assets/roster.svg" alt="The six roles — tech-lead (Race Engineer), senior-dev (Technical Director), implementer (Mechanic), boilerplate (Tyre Tech), code-reviewer (Scrutineer), debugger (Telemetry Engineer)" width="100%">
+</div>
 
 | Agent           | Role                                                                                                                       | Tier intent         | The tech lead routes here when…                                                                                  |
 |-----------------|----------------------------------------------------------------------------------------------------------------------------|---------------------|------------------------------------------------------------------------------------------------------------------|
