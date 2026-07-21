@@ -276,6 +276,8 @@ install_opencode() {
   fi
 
   # Back up and replace ~/.config/opencode/agents/ with a fresh symlink.
+  # Last arg is a decorative label only, not a path operand (the real path is the arg before it).
+  # shellcheck disable=SC2088
   install_agent_dir "$HOME/.config/opencode/agents" "$REPO_ROOT/agents" "~/.config/opencode/agents"
 
   # Merge the chosen profile into ~/.config/opencode/opencode.jsonc,
@@ -318,6 +320,8 @@ install_claude() {
     node "$REPO_ROOT/scripts/sync-agents.mjs" --profile "$PROFILE"
   fi
 
+  # Last arg is a decorative label only, not a path operand (the real path is the arg before it).
+  # shellcheck disable=SC2088
   install_agent_dir "$HOME/.claude/agents" "$REPO_ROOT/.claude/agents" "~/.claude/agents"
 
   # Symlink skills into ~/.claude/skills/, one directory at a time, so an
@@ -334,6 +338,8 @@ install_claude() {
     skill_src="${skill_src%/}"
 
     if [ -L "$skill_target" ]; then
+      # $1/$2 must expand inside the bash -c subshell, not the parent shell.
+      # shellcheck disable=SC2016
       act "refresh existing symlink $skill_target -> $skill_src" bash -c \
         'rm "$1" && ln -s "$2" "$1"' _ "$skill_target" "$skill_src"
     elif [ -e "$skill_target" ]; then
@@ -411,6 +417,8 @@ else
   fi
   if [ -d "$HOME/.claude" ] || command -v claude >/dev/null 2>&1; then
     DETECTED_LIST+=(claude)
+    # Decorative label only, not a path operand.
+    # shellcheck disable=SC2088
     DETECT_REASONS+=("~/.claude exists or claude CLI on PATH")
   fi
   if command -v codex >/dev/null 2>&1; then
@@ -419,6 +427,8 @@ else
   fi
   if [ -d "$HOME/.gemini" ] || command -v gemini >/dev/null 2>&1; then
     DETECTED_LIST+=(antigravity)
+    # Decorative label only, not a path operand.
+    # shellcheck disable=SC2088
     DETECT_REASONS+=("~/.gemini exists or gemini CLI on PATH")
   fi
 

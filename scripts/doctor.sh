@@ -74,7 +74,10 @@ check_repo_symlink() {
   fi
 }
 
+# Second arg to check_repo_symlink is a decorative label only, not a path operand.
+# shellcheck disable=SC2088
 check_repo_symlink "$HOME/.config/opencode/agents" "~/.config/opencode/agents"
+# shellcheck disable=SC2088
 check_repo_symlink "$HOME/.claude/agents" "~/.claude/agents"
 
 CLAUDE_SKILLS_DIR="$HOME/.claude/skills"
@@ -83,6 +86,8 @@ if [ -d "$REPO_SKILLS_DIR" ]; then
   for skill_src in "$REPO_SKILLS_DIR"/*/; do
     [ -d "$skill_src" ] || continue
     skill_name="$(basename "$skill_src")"
+    # Second arg to check_repo_symlink is a decorative label only, not a path operand.
+    # shellcheck disable=SC2088
     check_repo_symlink "$CLAUDE_SKILLS_DIR/$skill_name" "~/.claude/skills/$skill_name"
   done
 fi

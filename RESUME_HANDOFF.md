@@ -134,14 +134,26 @@ DONE since last update:
 - **Brand assets created:** `assets/logo.svg` (roundel) + `assets/banner.svg` (hero),
   finalized to the approved brand kit (artifact d0426d38-0830-4ed6-867d-fa84df7689f8).
 
-DEFERRED — ready to launch, need budget:
-- **Code-review** of the `scripts/install.sh` rewrite (code-reviewer, read-only).
-- **Branding wave** (tech-lead): README rewrite (firstmate structure + Scuderia identity;
-  PRESERVE the new per-harness `--target` Quickstart the install agent added; embed
-  `assets/banner.svg` + `logo.svg`; badges → repo path `pessinamistic/scuderia`) +
-  `LICENSE` (MIT) + `CONTRIBUTING.md` + in-repo rename `opencode_agents`→`scuderia`
-  (only remaining tracked ref: `scripts/README.md:1`). EXCLUDE the `gh repo rename` and
-  the local-dir rename — orchestrator + user do those.
+BRANDING — DONE INLINE (2026-07-21, no agents, budget-mindful):
+- `README.md`: added centered banner (`assets/banner.svg`) + 5 shields.io badges
+  (license/CI/harnesses/node/deps, repo path `pessinamistic/scuderia`) + retitled
+  `# Scuderia` / "Essere Ferrari." The existing per-harness `--target` Quickstart and all
+  technical body content were PRESERVED (surgical header edit, not a rewrite).
+- `LICENSE`: pre-existing MIT; copyright line → "Scuderia contributors".
+- `CONTRIBUTING.md`: created, grounded in real invariants (single-source agents, the
+  validate gate, zero deps, voice-only persona rule).
+- `scripts/README.md`: retitled `# scuderia · scripts` (was the last tracked
+  `opencode_agents` ref — now clean).
+- `assets/banner.svg` + `assets/logo.svg`: well-formed, in repo.
+- Gate: 6 errors / 0 warnings — 6-error baseline UNCHANGED (the codex.work.jsonc TODO
+  warnings vanished because a concurrent/external process filled those placeholders; not
+  from the branding edits).
+
+STILL DEFERRED — need budget / user action:
+- **Code-review** of the `scripts/install.sh` rewrite (code-reviewer, read-only) — paid
+  delegation, ask user before spending.
+- **Full rename execution** (NOT in-repo refs — those are done): `gh repo rename scuderia`
+  (confirm first) + local dir rename + `install.sh` re-run to re-point symlinks. User does these.
 
 ## BUDGET-AWARE MODEL ROUTING (user supplied work-device Copilot model list)
 Problem: all 6 agents route to premium Copilot models, draining a tight premium-request quota.

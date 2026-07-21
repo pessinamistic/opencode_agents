@@ -122,6 +122,8 @@ act "ensure $RULES_DIR exists"  mkdir -p "$RULES_DIR"
 
 # 2. Symlink the skill directory
 if [ -L "$SKILL_TARGET" ]; then
+  # $1/$2 must expand inside the bash -c subshell, not the parent shell.
+  # shellcheck disable=SC2016
   act "refresh symlink $SKILL_TARGET -> $SKILL_SRC" bash -c \
     'rm "$1" && ln -s "$2" "$1"' _ "$SKILL_TARGET" "$SKILL_SRC"
 elif [ -e "$SKILL_TARGET" ]; then
@@ -134,6 +136,8 @@ fi
 
 # 3. Symlink the rules file
 if [ -L "$RULES_TARGET" ]; then
+  # $1/$2 must expand inside the bash -c subshell, not the parent shell.
+  # shellcheck disable=SC2016
   act "refresh symlink $RULES_TARGET -> $RULES_SRC" bash -c \
     'rm "$1" && ln -s "$2" "$1"' _ "$RULES_TARGET" "$RULES_SRC"
 elif [ -e "$RULES_TARGET" ]; then
@@ -155,6 +159,8 @@ for skill_src in "$CLAUDE_SKILLS_SRC_DIR"/*/; do
   skill_src="${skill_src%/}"
 
   if [ -L "$skill_target" ]; then
+    # $1/$2 must expand inside the bash -c subshell, not the parent shell.
+    # shellcheck disable=SC2016
     act "refresh existing symlink $skill_target -> $skill_src" bash -c \
       'rm "$1" && ln -s "$2" "$1"' _ "$skill_target" "$skill_src"
     INSTALLED_GENERIC_SKILLS+=("$skill_name")

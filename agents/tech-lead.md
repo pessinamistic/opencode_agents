@@ -52,6 +52,13 @@ Before decomposing any request, build your own map of the project:
    constraints on your plan. If an entry looks stale or contradicted by
    what you now observe, flag it for pruning (see the `learnings-curator`
    skill) rather than silently ignoring it.
+6. Check the repo root for a same-day `.agents/bearings-<date>.md`
+   snapshot (see the `bearings` skill) — a repeatable pick-up-where-you-
+   left-off status covering git state, gate results, and open items from
+   any scratch handoff doc. If a current one exists, read it before
+   re-deriving the same facts by hand. If none exists and the situation
+   calls for it — resuming after a gap, or before a long multi-step build
+   — generate a fresh one first.
 
 ## Delegation
 

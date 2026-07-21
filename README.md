@@ -1,6 +1,18 @@
-# opencode-engineering-team
+<div align="center">
 
-*Six roles, one pit wall.*
+<img src="assets/banner.svg" alt="Scuderia — a stable of engineering agents; brief one, ship with the crew" width="100%">
+
+# Scuderia
+
+**Six roles, one pit wall.** &nbsp;·&nbsp; *Essere Ferrari.*
+
+[![license](https://img.shields.io/badge/license-MIT-FFC400?style=flat-square)](LICENSE)
+[![CI](https://img.shields.io/github/actions/workflow/status/pessinamistic/scuderia/ci.yml?style=flat-square&label=CI&color=00913A)](.github/workflows/ci.yml)
+![harnesses](https://img.shields.io/badge/harnesses-4-E2001A?style=flat-square)
+![node](https://img.shields.io/badge/node-%E2%89%A5%2020-6b6d76?style=flat-square)
+![deps](https://img.shields.io/badge/deps-zero-E2001A?style=flat-square)
+
+</div>
 
 An orchestrated engineering team for [OpenCode](https://opencode.ai): a
 `tech-lead` agent that plans and delegates, five worker agents that execute,
@@ -255,7 +267,7 @@ equivalent at all. Full mapping table, verification steps, and sources:
 
 ## Skills
 
-Eleven skills live in `.claude/skills/<name>/SKILL.md`, a path both
+Thirteen skills live in `.claude/skills/<name>/SKILL.md`, a path both
 OpenCode and Claude Code search — one directory serves both tools with zero
 duplication.
 
@@ -266,23 +278,35 @@ explanations of what Kafka is: `java`, `spring-boot`, `kafka`, `mongodb`,
 `postgres`, `redis`, `elasticsearch`, `kubernetes`, `testing`, `debugging`.
 `<!-- CUSTOMIZE: … -->` markers flag the org-specific values to replace.
 
-The eleventh, **`delegate-first`**, is a session-init *policy* skill rather
-than a stack convention: loading it (`/delegate-first`) turns the running
-agent into an orchestrator for the rest of the session — delegate any
-multi-step, parallelizable, or file-producing task to the roster by
-default, triage each delegation to the cheapest capable model tier,
-escalate ambiguity upward instead of guessing, and reject any "done" report
-that lacks a verification result.
+The other three are policy/practice skills rather than stack conventions:
+
+- **`delegate-first`** — loading it (`/delegate-first`) turns the running
+  agent into an orchestrator for the rest of the session — delegate any
+  multi-step, parallelizable, or file-producing task to the roster by
+  default, triage each delegation to the cheapest capable model tier,
+  escalate ambiguity upward instead of guessing, and reject any "done"
+  report that lacks a verification result.
+- **`learnings-curator`** — curates this project's `.agents/learnings.md`,
+  the per-project scratch memory for task-specific gotchas: dedupes,
+  rewrites or prunes entries in place, and graduates a maturing entry to
+  `CLAUDE.md`/`AGENTS.md` or the user's global `~/.claude/CLAUDE.md` when
+  it outgrows a task-specific gotcha. `tech-lead` is the read path;
+  `/learnings-curator` (or the end of a body of work) is the write path.
+- **`bearings`** — generates a "pick up where I left off" status snapshot
+  (`/bearings`): git state, this project's own gate results, and any open
+  items from a scratch handoff doc, composed into a fixed four-section
+  report written to a gitignored dated file plus a concise chat summary.
+  `tech-lead` checks for a current one during orientation.
 
 Antigravity also receives every skill under `.claude/skills/*` — via
 `antigravity/install.sh`, which mirrors each one into `~/.gemini/skills/`
 alongside its own `engineering-team` skill — while Codex CLI has no
 applicable skill-discovery mechanism today (see [docs/codex.md](docs/codex.md)).
 
-To make it load automatically instead of needing an explicit
-`/delegate-first` every session, add a one-line trigger for it to your
-**global** `CLAUDE.md` (`~/.claude/CLAUDE.md`) — the same pattern as any
-other always-on skill, e.g. "At the start of every session, load the
+To make a skill load automatically instead of needing an explicit
+invocation every session, add a one-line trigger for it to your **global**
+`CLAUDE.md` (`~/.claude/CLAUDE.md`) — the same pattern as any other
+always-on skill, e.g. "At the start of every session, load the
 `delegate-first` skill."
 
 To add your own skill, see [docs/adding-a-skill.md](docs/adding-a-skill.md).
@@ -318,7 +342,7 @@ is a one-line profile edit.
 │   └── debugger.md
 ├── .claude/
 │   ├── agents/                  # GENERATED Claude Code mirrors — never hand-edit
-│   └── skills/                  # eleven skills, shared by OpenCode AND Claude Code
+│   └── skills/                  # thirteen skills, shared by OpenCode AND Claude Code
 │       └── delegate-first/      # session-init orchestrator-mode policy skill
 ├── .codex/
 │   └── agents/                  # GENERATED native Codex TOML agents — never hand-edit
@@ -329,6 +353,7 @@ is a one-line profile edit.
 │   └── codex.work.jsonc         # Codex routing — TODO template, fill on the work account
 ├── scripts/
 │   ├── install.sh               # --target <comma-list of opencode|claude|codex|antigravity, or default|all>, --profile personal|work, --dry-run
+│   ├── lint.sh                  # ShellCheck gate: pinned version + dynamically-discovered file set; --required-version
 │   ├── sync-agents.mjs          # agents/ -> .claude/agents/ (hardcoded per-role model tiers)
 │   ├── sync-codex-agents.mjs    # agents/ -> .codex/agents/*.toml (--profile, --check)
 │   ├── validate.mjs             # contract checks (--platform all|opencode|claude|codex)

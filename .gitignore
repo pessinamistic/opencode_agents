@@ -20,3 +20,6 @@ benchmarks/results/*
 
 # tech-lead session handoff notes — not part of the public repo
 TECH_LEAD_HANDOFF.md
+
+# bearings status snapshots — regenerated on demand, not shared history
+.agents/bearings-*.md

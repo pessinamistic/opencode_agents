@@ -34,3 +34,72 @@ jobs:
       # Node >= 20. A bare directory arg is not portably scanned across Node
       # versions (fails on Node 24), so pass the files explicitly.
       - run: node --test scripts/lib/*.test.mjs
+
+  lint:
+    name: Lint shell scripts
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # scripts/lint.sh is the single owner of the pinned ShellCheck version
+      # (REQUIRED_SHELLCHECK) and of the tracked file set -- read the version
+      # from it here instead of hardcoding it a second time in this
+      # workflow, so CI and a local run can never silently diverge.
+      - name: Read pinned ShellCheck version
+        id: shellcheck-version
+        run: echo "version=$(bash scripts/lint.sh --required-version)" >> "$GITHUB_OUTPUT"
+      - name: Install pinned ShellCheck
+        env:
+          SHELLCHECK_VERSION: ${{ steps.shellcheck-version.outputs.version }}
+        run: |
+          set -eu
+          url="https://github.com/koalaman/shellcheck/releases/download/v${SHELLCHECK_VERSION}/shellcheck-v${SHELLCHECK_VERSION}.linux.x86_64.tar.xz"
+          curl -fsSL "$url" -o /tmp/shellcheck.tar.xz
+          # Checksum below was computed locally against the real,
+          # currently-published v0.11.0 linux.x86_64 release asset (see
+          # scripts/lint.sh for the pinned version). Fail loudly on
+          # mismatch rather than silently run an unverified binary; a
+          # future version bump must update both this checksum and
+          # REQUIRED_SHELLCHECK in scripts/lint.sh together, which is the
+          # point -- they can't drift apart unnoticed.
+          echo "8c3be12b05d5c177a04c29e3c78ce89ac86f1595681cab149b65b97c4e227198  /tmp/shellcheck.tar.xz" | sha256sum -c -
+          mkdir -p "$RUNNER_TEMP/bin"
+          tar -xf /tmp/shellcheck.tar.xz -C "$RUNNER_TEMP/bin" --strip-components=1 "shellcheck-v${SHELLCHECK_VERSION}/shellcheck"
+          chmod +x "$RUNNER_TEMP/bin/shellcheck"
+          echo "$RUNNER_TEMP/bin" >> "$GITHUB_PATH"
+      - run: bash scripts/lint.sh
+
+  # This repo's actual install target is a user's own Mac (~/.claude,
+  # ~/.config/opencode paths in scripts/install.sh), but until now CI only
+  # ran on ubuntu-latest, so a macOS-only bug in the install path (or in any
+  # tracked shell script) could ship undetected. This job runs the same
+  # cheap smoke checks on macos-latest instead.
+  macos-smoke:
+    name: macOS install smoke test
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      # scripts/doctor.sh and scripts/install.sh both invoke node for parts
+      # of their own logic even under dry-run/detection paths, so node must
+      # be on PATH here the same way drift-gate provides it.
+      - name: doctor.sh preflight (always exits 0; informational)
+        run: bash scripts/doctor.sh
+      # Uses the literal /bin/bash path rather than bare `bash`: on macOS
+      # the stock /bin/bash is an old, more restrictive build (3.2) than
+      # whatever newer Homebrew-installed bash might be first on PATH on a
+      # given machine. The whole point of this step is to catch a script
+      # that accidentally relies on a bash feature the stock macOS shell
+      # doesn't have -- using bare `bash` here would silently skip that
+      # check by running whatever (possibly newer) bash the runner
+      # happened to resolve first.
+      - name: Syntax-check every tracked shell script under stock /bin/bash
+        run: |
+          set -eu
+          for f in $(git ls-files -- '*.sh'); do
+            echo "-- $f --"
+            /bin/bash -n "$f"
+          done
+      - name: install.sh dry-run smoke test
+        run: bash scripts/install.sh --target opencode,claude --profile personal --dry-run
