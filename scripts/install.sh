@@ -44,6 +44,8 @@ PROFILE=""
 DRY_RUN=0
 TARGET=""
 TARGET_EXPLICIT=0
+FLEET=0
+FLEET_EXPLICIT=0
 
 usage() {
   cat <<'USAGE'
@@ -65,6 +67,12 @@ Usage: install.sh [--target <comma-list>] [--profile personal|work] [--dry-run]
                               machine.
   --profile personal|work     Force a routing profile instead of auto-detecting.
   --dry-run                   Print every action that would be taken; do nothing.
+  --fleet                     Also set up optional fleet mode (tmux
+                              orchestration): symlink the pit-wall CLI into
+                              ~/.local/bin. Needs tmux; warns and skips if
+                              tmux is absent. Off by default. See
+                              docs/fleet-mode.md.
+  --no-fleet                  Never prompt for or set up fleet mode.
   -h, --help                  Show this help.
 
 Targets, in the fixed run order:
@@ -100,6 +108,16 @@ while [ $# -gt 0 ]; do
       ;;
     --dry-run)
       DRY_RUN=1
+      shift
+      ;;
+    --fleet)
+      FLEET=1
+      FLEET_EXPLICIT=1
+      shift
+      ;;
+    --no-fleet)
+      FLEET=0
+      FLEET_EXPLICIT=1
       shift
       ;;
     -h|--help)
@@ -401,6 +419,44 @@ install_antigravity() {
 }
 
 # ---------------------------------------------------------------------
+# fleet step (optional, opt-in): make the pit-wall CLI available for fleet
+# mode (tmux orchestration). Needs tmux; if it is absent we warn and skip
+# rather than fail, because fleet mode is opt-in. Symlinks (never copies,
+# never clobbers a real file) scripts/fleet/pit-wall.sh into ~/.local/bin,
+# mirroring how skills are linked. See docs/fleet-mode.md.
+# ---------------------------------------------------------------------
+
+install_fleet() {
+  if ! command -v tmux >/dev/null 2>&1; then
+    log "fleet: tmux is not installed — fleet mode needs it (e.g. brew install tmux)."
+    log "fleet: skipping fleet setup (re-run with --fleet once tmux is available)."
+    return 0
+  fi
+  local bindir="$HOME/.local/bin" link src
+  link="$bindir/pit-wall"
+  src="$REPO_ROOT/scripts/fleet/pit-wall.sh"
+  act "ensure $bindir exists" mkdir -p "$bindir"
+  if [ -L "$link" ]; then
+    # $1/$2 must expand inside the bash -c subshell, not the parent shell.
+    # shellcheck disable=SC2016
+    act "refresh existing symlink $link -> $src" bash -c \
+      'rm "$1" && ln -s "$2" "$1"' _ "$link" "$src"
+  elif [ -e "$link" ]; then
+    log "fleet: WARNING: $link already exists and is not a symlink — leaving it alone."
+  else
+    act "symlink $link -> $src" ln -s "$src" "$link"
+  fi
+  case ":$PATH:" in
+    *":$bindir:"*) : ;;
+    *)
+      # Decorative note; the ~ is literal message text, not a path operand.
+      # shellcheck disable=SC2088
+      log "fleet: NOTE: ~/.local/bin is not on your PATH — add it, or run $src directly." ;;
+  esac
+  log "fleet: ready — try 'pit-wall spawn implementer \"...\"' (see docs/fleet-mode.md)."
+}
+
+# ---------------------------------------------------------------------
 # 0. Determine the target: a de-duplicated set of harnesses to install,
 #    selected from {opencode, claude, codex, antigravity}. See expand_target
 #    above for the alias rules.
@@ -484,6 +540,15 @@ else
 fi
 log "Selected profile: $PROFILE ($REASON)"
 
+# Optional fleet-mode setup is off unless requested. When interactive and not
+# already decided by --fleet/--no-fleet, offer it once (default no).
+if [ "$FLEET_EXPLICIT" != "1" ] && [ -t 0 ] && [ "$DRY_RUN" != "1" ]; then
+  fleet_ans=""
+  read -r -p "Set up optional fleet mode (tmux orchestration)? [y/N]: " fleet_ans || fleet_ans=""
+  case "$fleet_ans" in y|Y|yes|YES|Yes) FLEET=1 ;; *) FLEET=0 ;; esac
+fi
+[ "$FLEET" = "1" ] && log "Fleet mode: will set up (optional; needs tmux)."
+
 if [ "$DRY_RUN" = "1" ]; then
   log "[dry-run] mode: no files will be created, moved, or symlinked."
 fi
@@ -516,6 +581,12 @@ if [ "$SEL_ANTIGRAVITY" = "1" ]; then
   log ""
   log "== antigravity =="
   install_antigravity
+fi
+
+if [ "$FLEET" = "1" ]; then
+  log ""
+  log "== fleet (optional) =="
+  install_fleet
 fi
 
 log ""

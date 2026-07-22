@@ -148,6 +148,20 @@ Then start `opencode` in any project and select the `tech-lead` agent (it
 registers as a primary agent) — hand it a multi-step feature request and let
 it delegate. Small single edits are cheaper done directly with a worker.
 
+## Fleet mode (optional)
+
+Want to fire off several **independent** tasks in parallel and walk away,
+instead of one delegation at a time inside a `tech-lead` session?
+`scripts/fleet/pit-wall.sh` spawns each role as its own top-level `opencode`
+process in its own tmux window and supervises the fleet from a live "pit
+wall" board (`spawn`, `view --watch`, `attach`, `teardown`, …). It needs
+`tmux`, and it is a genuinely separate mode, not an alternative front end for
+the same thing: it **bypasses the permission-enforced tech-lead → worker
+hierarchy** above, so reach for it on unrelated parallel tasks, and reach for
+in-session orchestration when you want the enforced brief/review contract on
+one body of work. Commands, statuses, and config:
+[docs/fleet-mode.md](docs/fleet-mode.md).
+
 ## Model routing
 
 Model IDs live **only** in `config/opencode.personal.jsonc` and
