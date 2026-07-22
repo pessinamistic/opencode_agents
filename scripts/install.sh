@@ -600,17 +600,34 @@ fi
 # ---------------------------------------------------------------------
 # 3. Post-install verify: re-run the health checks so a broken install is
 #    caught immediately instead of at the next agent invocation. Runs once,
-#    regardless of which subset of steps was selected. validate.mjs is the
-#    hard check (its own abort-on-failure gates already ran earlier in this
-#    script, per selected step; here its output is just surfaced, not
-#    re-enforced). doctor.sh is advisory and always exits 0.
+#    regardless of which subset of steps was selected -- but scoped to only
+#    the platform(s) actually selected this run (one `--platform <name>`
+#    call per selected SEL_* flag, in the same fixed order as the install
+#    steps above), so e.g. `install.sh --target codex` doesn't surface
+#    unrelated OpenCode config errors. validate.mjs is the hard check (its
+#    own abort-on-failure gates already ran earlier in this script, per
+#    selected step; here its output is just surfaced, not re-enforced).
+#    doctor.sh is advisory, not platform-specific, and always exits 0 -- it
+#    still runs unconditionally.
 # ---------------------------------------------------------------------
 
 log ""
 log "Post-install verification:"
 if [ "$DRY_RUN" = "1" ]; then
-  log "[dry-run] would: run scripts/validate.mjs + scripts/doctor.sh (post-install verify)"
+  for entry in "opencode:$SEL_OPENCODE" "claude:$SEL_CLAUDE" "codex:$SEL_CODEX" "antigravity:$SEL_ANTIGRAVITY"; do
+    platform="${entry%%:*}"
+    selected="${entry##*:}"
+    [ "$selected" = "1" ] && log "[dry-run] would: run scripts/validate.mjs --platform $platform"
+  done
+  log "[dry-run] would: run scripts/doctor.sh (advisory, always runs)"
 else
-  node "$REPO_ROOT/scripts/validate.mjs" || true
+  for entry in "opencode:$SEL_OPENCODE" "claude:$SEL_CLAUDE" "codex:$SEL_CODEX" "antigravity:$SEL_ANTIGRAVITY"; do
+    platform="${entry%%:*}"
+    selected="${entry##*:}"
+    if [ "$selected" = "1" ]; then
+      log "-> node scripts/validate.mjs --platform $platform"
+      node "$REPO_ROOT/scripts/validate.mjs" --platform "$platform" || true
+    fi
+  done
   bash "$REPO_ROOT/scripts/doctor.sh" || true
 fi

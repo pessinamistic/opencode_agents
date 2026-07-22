@@ -3,7 +3,7 @@
 // installed. Zero npm dependencies (Node >= 20 required). See README.md
 // and docs/model-routing.md for the rules this enforces.
 //
-// Usage: node scripts/validate.mjs [--platform all|opencode|claude|codex]
+// Usage: node scripts/validate.mjs [--platform all|opencode|claude|codex|antigravity]
 //   all (default) runs everything; a specific platform runs the shared
 //   source checks plus that platform's config/generated-file checks.
 //
@@ -24,11 +24,16 @@ import {
   CODEX_EFFORTS,
   CODEX_SANDBOX_MODES,
 } from './sync-codex-agents.mjs';
+import {
+  buildAgentMd,
+  ANTIGRAVITY_MODEL_BY_AGENT,
+  ANTIGRAVITY_MODEL_TIERS,
+} from './sync-antigravity-agents.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(__dirname, '..');
 
-const PLATFORMS = ['all', 'opencode', 'claude', 'codex'];
+const PLATFORMS = ['all', 'opencode', 'claude', 'codex', 'antigravity'];
 let PLATFORM = 'all';
 {
   const argv = process.argv.slice(2);
@@ -629,12 +634,117 @@ function validateCodex() {
   validateAgentsMd();
 }
 
+// ---------------------------------------------------------------------
+// Antigravity: the generated .agents/agents/oc-<role>/agent.md files.
+// Same staleness-by-rebuild pattern as the Codex TOML check above: rebuild
+// each file in-memory via the generator's own exported buildAgentMd() +
+// ANTIGRAVITY_MODEL_BY_AGENT and compare byte-for-byte, so a hand-edited or
+// stale committed file both fail. Also asserts the ANTIGRAVITY_MODEL_BY_AGENT
+// tier map covers exactly the six roles with a confirmed tier value (same
+// guard pattern as validateClaudeTierMap above), and that each committed
+// file lives in its own dedicated oc-<role>/ subdirectory (the discovery
+// gotcha documented in antigravity/README.md).
+// ---------------------------------------------------------------------
+
+function validateAntigravityTierMap() {
+  const mapped = Object.keys(ANTIGRAVITY_MODEL_BY_AGENT);
+  for (const name of TEAM_ROLES) {
+    if (!mapped.includes(name)) {
+      error(
+        `sync-antigravity-agents.mjs: ANTIGRAVITY_MODEL_BY_AGENT has no entry for "${name}" — ` +
+          `its agent.md would fail to generate.`
+      );
+    }
+  }
+  for (const name of mapped) {
+    if (!TEAM_ROLES.includes(name)) {
+      error(
+        `sync-antigravity-agents.mjs: ANTIGRAVITY_MODEL_BY_AGENT has an entry for "${name}", ` +
+          `which is not one of the six agents — remove the stale entry or add agents/${name}.md.`
+      );
+    }
+    const tier = ANTIGRAVITY_MODEL_BY_AGENT[name];
+    if (typeof tier !== 'string' || !ANTIGRAVITY_MODEL_TIERS.includes(tier)) {
+      error(
+        `sync-antigravity-agents.mjs: ANTIGRAVITY_MODEL_BY_AGENT["${name}"] is ${JSON.stringify(tier)} — ` +
+          `expected one of the confirmed Antigravity values: ${ANTIGRAVITY_MODEL_TIERS.join(', ')}.`
+      );
+    }
+  }
+}
+
+function validateAntigravityGeneratedFiles() {
+  const outBaseDir = path.join(REPO_ROOT, '.agents', 'agents');
+  for (const role of TEAM_ROLES) {
+    const agentPath = path.join(outBaseDir, `oc-${role}`, 'agent.md');
+    if (!fs.existsSync(agentPath)) {
+      error(
+        `.agents/agents/oc-${role}/agent.md is missing — run ` +
+          `\`node scripts/sync-antigravity-agents.mjs --profile personal\`.`
+      );
+      continue;
+    }
+    const existing = fs.readFileSync(agentPath, 'utf8');
+    let parsed;
+    try {
+      parsed = parseFrontmatterFile(existing);
+    } catch (e) {
+      error(`.agents/agents/oc-${role}/agent.md: failed to parse frontmatter — ${e.message}`);
+      continue;
+    }
+    if (!parsed) {
+      error(`.agents/agents/oc-${role}/agent.md: no frontmatter block found (must start with "---" at byte 0).`);
+      continue;
+    }
+    const fm = parsed.frontmatter;
+    if (fm.name !== `oc-${role}`) {
+      error(`.agents/agents/oc-${role}/agent.md: frontmatter name "${fm.name}" does not match "oc-${role}".`);
+    }
+    if (typeof fm.description !== 'string' || !fm.description) {
+      error(`.agents/agents/oc-${role}/agent.md: frontmatter is missing a non-empty "description".`);
+    }
+    if ('model' in fm && !ANTIGRAVITY_MODEL_TIERS.includes(fm.model)) {
+      error(
+        `.agents/agents/oc-${role}/agent.md: frontmatter "model: ${fm.model}" is not one of the ` +
+          `confirmed Antigravity values (${ANTIGRAVITY_MODEL_TIERS.join('|')}).`
+      );
+    }
+
+    const srcPath = path.join(REPO_ROOT, 'agents', `${role}.md`);
+    if (!fs.existsSync(srcPath)) continue; // missing source reported elsewhere
+    const srcParsed = parseFrontmatterFile(fs.readFileSync(srcPath, 'utf8'));
+    if (fm.description !== srcParsed.frontmatter.description) {
+      error(`.agents/agents/oc-${role}/agent.md: description does not match agents/${role}.md's source description.`);
+    }
+
+    let expected;
+    try {
+      expected = buildAgentMd(role, srcParsed.frontmatter, srcParsed.body, ANTIGRAVITY_MODEL_BY_AGENT[role]);
+    } catch (e) {
+      error(`.agents/agents/oc-${role}/agent.md: could not rebuild for comparison — ${e.message}`);
+      continue;
+    }
+    if (existing !== expected) {
+      error(
+        `.agents/agents/oc-${role}/agent.md is stale or hand-edited — regenerate with ` +
+          `\`node scripts/sync-antigravity-agents.mjs --profile personal\`.`
+      );
+    }
+  }
+}
+
+function validateAntigravity() {
+  validateAntigravityTierMap();
+  validateAntigravityGeneratedFiles();
+}
+
 // Shared source checks always run; platform-specific checks are gated.
 validateAgents();
 if (wants('opencode') || wants('claude')) validateSkills(); // skills serve both
 if (wants('opencode')) validateConfigs();
 if (wants('claude')) validateClaudeTierMap();
 if (wants('codex')) validateCodex();
+if (wants('antigravity')) validateAntigravity();
 validateNoLeakedPaths();
 
 if (warnings.length) {
