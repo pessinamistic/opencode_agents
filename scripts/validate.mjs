@@ -18,6 +18,7 @@ import { parseFrontmatterFile } from './lib/frontmatter.mjs';
 import { parseJsonc } from './lib/jsonc.mjs';
 import { CLAUDE_MODEL_BY_AGENT } from './sync-agents.mjs';
 import { TEAM_ROLES, WORKER_ROLES } from './lib/team.mjs';
+import { buildFleetAgentMd, fleetAgentName, fleetAgentFilename } from './sync-fleet-agents.mjs';
 import {
   buildCodexToml,
   loadCodexProfile,
@@ -324,28 +325,37 @@ function validateConfigProfile(fileName, { isPersonal }) {
     return null;
   }
 
+  // Checked for both a primary agent name (e.g. "boilerplate") and its
+  // fleet-mode standalone counterpart (e.g. "fleet-boilerplate") below --
+  // OpenCode's agent.<name>.model config is keyed by the exact invoked
+  // agent identifier (confirmed empirically -- see scripts/sync-fleet-agents.mjs's
+  // header), so fleet-<role> does NOT inherit <role>'s entry for free.
   const modelsByAgent = {};
-  for (const agentName of TEAM_ROLES) {
-    const entry = obj.agent[agentName];
+  function checkAgentModelEntry(agentKey) {
+    const entry = obj.agent[agentKey];
     if (!entry || typeof entry !== 'object' || typeof entry.model !== 'string' || entry.model === '') {
       // This is the sharpest gotcha in the whole setup (see docs/model-routing.md): a missing
       // model entry does not error at runtime, it silently means "inherit
       // the tech lead's model." Fail loudly here instead.
       error(
-        `config/${fileName}: agent.${agentName}.model is missing. An unset model does ` +
+        `config/${fileName}: agent.${agentKey}.model is missing. An unset model does ` +
           `NOT mean "use a default" — it means this worker silently inherits the tech ` +
           `lead's (most expensive) model at runtime (see docs/model-routing.md).`
       );
-      continue;
+      return;
     }
-    modelsByAgent[agentName] = entry.model;
+    modelsByAgent[agentKey] = entry.model;
     if (entry.model === 'TODO') {
       if (isPersonal) {
-        error(`config/${fileName}: agent.${agentName}.model is still "TODO" — this profile ships as a real working config, not a template (see docs/model-routing.md).`);
+        error(`config/${fileName}: agent.${agentKey}.model is still "TODO" — this profile ships as a real working config, not a template (see docs/model-routing.md).`);
       } else {
-        warn(`config/${fileName}: agent.${agentName}.model is still "TODO" — fill it with a verbatim ID from \`opencode models\` on the work machine before using this profile (see docs/model-routing.md for the procedure).`);
+        warn(`config/${fileName}: agent.${agentKey}.model is still "TODO" — fill it with a verbatim ID from \`opencode models\` on the work machine before using this profile (see docs/model-routing.md for the procedure).`);
       }
     }
+  }
+  for (const agentName of TEAM_ROLES) {
+    checkAgentModelEntry(agentName);
+    checkAgentModelEntry(fleetAgentName(agentName));
   }
 
   if (!obj.agent.plan || typeof obj.agent.plan.model !== 'string' || obj.agent.plan.model === '') {
@@ -386,6 +396,84 @@ function validateConfigs() {
           );
         }
       }
+    }
+  }
+}
+
+// ---------------------------------------------------------------------
+// Fleet mode's generated agents/fleet/fleet-<role>.md files (see
+// docs/fleet-mode.md and scripts/sync-fleet-agents.mjs). These are an
+// OpenCode-side artifact -- real OpenCode agent definitions, just like
+// agents/*.md itself -- so their drift check is folded into the
+// "opencode" platform rather than getting its own --platform value, same
+// precedent as antigravity's generated files having no separate CI
+// --check line (see .github/workflows/ci.yml): `validate.mjs --platform
+// opencode` (which `--platform all` already runs) is sufficient.
+// Same staleness-by-rebuild pattern as the Codex/Antigravity checks above:
+// rebuild each file in-memory via the generator's own exported
+// buildFleetAgentMd() and compare byte-for-byte, so a hand-edited or
+// stale committed file both fail.
+// ---------------------------------------------------------------------
+
+function validateFleetAgentFiles() {
+  const fleetDir = path.join(REPO_ROOT, 'agents', 'fleet');
+  for (const role of TEAM_ROLES) {
+    const srcPath = path.join(REPO_ROOT, 'agents', `${role}.md`);
+    if (!fs.existsSync(srcPath)) continue; // missing source reported elsewhere
+
+    const outPath = path.join(fleetDir, fleetAgentFilename(role));
+    if (!fs.existsSync(outPath)) {
+      error(
+        `agents/fleet/${fleetAgentFilename(role)} is missing — run ` +
+          `\`node scripts/sync-fleet-agents.mjs\`.`
+      );
+      continue;
+    }
+    const existing = fs.readFileSync(outPath, 'utf8');
+
+    let srcParsed;
+    try {
+      srcParsed = parseFrontmatterFile(fs.readFileSync(srcPath, 'utf8'));
+    } catch (e) {
+      error(`agents/fleet/${fleetAgentFilename(role)}: could not parse source agents/${role}.md for comparison — ${e.message}`);
+      continue;
+    }
+    if (!srcParsed) continue; // missing frontmatter on the source is reported elsewhere
+
+    let expected;
+    try {
+      expected = buildFleetAgentMd(role, srcParsed.frontmatter, srcParsed.body);
+    } catch (e) {
+      error(`agents/fleet/${fleetAgentFilename(role)}: could not rebuild for comparison — ${e.message}`);
+      continue;
+    }
+    if (existing !== expected) {
+      error(
+        `agents/fleet/${fleetAgentFilename(role)} is stale or hand-edited — regenerate with ` +
+          `\`node scripts/sync-fleet-agents.mjs\`.`
+      );
+      continue;
+    }
+
+    // Structural sanity on what we emitted (belt and braces, mirroring the
+    // Codex TOML check above): confirm the override actually took and that
+    // no model: key crept back in despite buildFleetAgentMd's own guard.
+    let parsed;
+    try {
+      parsed = parseFrontmatterFile(existing);
+    } catch (e) {
+      error(`agents/fleet/${fleetAgentFilename(role)}: failed to parse its own frontmatter — ${e.message}`);
+      continue;
+    }
+    if (!parsed || parsed.frontmatter.mode !== 'primary') {
+      error(`agents/fleet/${fleetAgentFilename(role)}: mode must be "primary" (found ${JSON.stringify(parsed && parsed.frontmatter.mode)}).`);
+    }
+    if (parsed && 'model' in parsed.frontmatter) {
+      error(
+        `agents/fleet/${fleetAgentFilename(role)}: frontmatter contains a "model:" key. Model ` +
+          `routing must live only in config/opencode.<profile>.jsonc under agent.${fleetAgentName(role)} ` +
+          `(see docs/model-routing.md).`
+      );
     }
   }
 }
@@ -742,6 +830,7 @@ function validateAntigravity() {
 validateAgents();
 if (wants('opencode') || wants('claude')) validateSkills(); // skills serve both
 if (wants('opencode')) validateConfigs();
+if (wants('opencode')) validateFleetAgentFiles();
 if (wants('claude')) validateClaudeTierMap();
 if (wants('codex')) validateCodex();
 if (wants('antigravity')) validateAntigravity();

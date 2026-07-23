@@ -101,7 +101,7 @@ unset SCUDERIA_FLEET_RUN_ARGS
 
 check "opencode backend (default)" \
   "$(fleet_build_launch_cmd implementer opencode 'add the healthz endpoint')" \
-  "opencode run --agent implementer  'add the healthz endpoint'"
+  "opencode run --agent fleet-implementer  'add the healthz endpoint'"
 
 check "antigravity backend" \
   "$(fleet_build_launch_cmd implementer antigravity 'add the healthz endpoint')" \

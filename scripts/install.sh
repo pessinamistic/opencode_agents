@@ -9,7 +9,9 @@
 #   scripts/install.sh [--target <comma-list>] [--profile personal|work] [--dry-run]
 #
 # --target is a comma-separated list of harnesses, any subset of:
-#   opencode      symlink agents/ -> ~/.config/opencode/agents and merge
+#   opencode      symlink agents/ (plus the generated fleet-primary variants
+#                 in agents/fleet/, regenerated first -- see docs/fleet-mode.md)
+#                 -> ~/.config/opencode/agents and merge
 #                 config/opencode.<profile>.jsonc into ~/.config/opencode/opencode.jsonc
 #   claude        regenerate the Claude Code agent mirror, symlink
 #                 .claude/agents -> ~/.claude/agents and .claude/skills/* -> ~/.claude/skills
@@ -76,7 +78,9 @@ Usage: install.sh [--target <comma-list>] [--profile personal|work] [--dry-run]
   -h, --help                  Show this help.
 
 Targets, in the fixed run order:
-  opencode      symlink agents/ -> ~/.config/opencode/agents and merge
+  opencode      symlink agents/ (plus the generated fleet-primary variants
+                in agents/fleet/, regenerated first -- see docs/fleet-mode.md)
+                -> ~/.config/opencode/agents and merge
                 config/opencode.<profile>.jsonc into ~/.config/opencode/opencode.jsonc
   claude        regenerate the Claude Code agent mirror, symlink
                 .claude/agents -> ~/.claude/agents and .claude/skills/* -> ~/.claude/skills
@@ -270,13 +274,23 @@ install_agent_dir() {
 }
 
 # ---------------------------------------------------------------------
-# opencode step: the shared validate.mjs gate (the full, all-platform
-# contract check -- catches a repo-wide problem before anything is written
-# under $HOME), then the agents symlink and the opencode.jsonc profile
-# merge. Runs only when opencode itself is selected.
+# opencode step: regenerate the fleet-primary agent variants (so what gets
+# symlinked below is always current -- same "regenerate before validating"
+# pattern the claude/codex steps use for their own generators), the shared
+# validate.mjs gate (the full, all-platform contract check -- catches a
+# repo-wide problem before anything is written under $HOME), then the
+# agents symlink and the opencode.jsonc profile merge. Runs only when
+# opencode itself is selected.
 # ---------------------------------------------------------------------
 
 install_opencode() {
+  if [ "$DRY_RUN" = "1" ]; then
+    log "[dry-run] would: node scripts/sync-fleet-agents.mjs --profile $PROFILE"
+  else
+    log "-> node scripts/sync-fleet-agents.mjs --profile $PROFILE"
+    node "$REPO_ROOT/scripts/sync-fleet-agents.mjs" --profile "$PROFILE"
+  fi
+
   if [ "$DRY_RUN" = "1" ]; then
     log "[dry-run] would: node scripts/validate.mjs"
   else
@@ -297,6 +311,28 @@ install_opencode() {
   # Last arg is a decorative label only, not a path operand (the real path is the arg before it).
   # shellcheck disable=SC2088
   install_agent_dir "$HOME/.config/opencode/agents" "$REPO_ROOT/agents" "~/.config/opencode/agents"
+
+  # Additive: fleet-primary agent variants (agents/fleet/*.md, generated
+  # above; see docs/fleet-mode.md and scripts/sync-fleet-agents.mjs),
+  # symlinked into the SAME directory the call just above just (re)created
+  # -- not backed up a second time, since install_agent_dir already moved
+  # anything that was there (including a previous run's fleet-*.md
+  # symlinks) into its own timestamped backup an instant ago, so this
+  # always starts from an empty, freshly-made directory. Needed because
+  # `opencode run --agent <name>` (fleet mode's opencode backend) requires
+  # a primary-mode agent for a top-level invocation, and only tech-lead
+  # among the six source roles is mode: primary -- confirmed empirically
+  # that OpenCode's global agent directory is the reliable discovery path
+  # for fleet mode's actual usage pattern (its tmux window cwd is wherever
+  # `pit-wall.sh spawn` was invoked from, which may be any project, not
+  # necessarily this repo's own checkout).
+  local fleet_src_dir="$REPO_ROOT/agents/fleet"
+  local fleet_target_dir="$HOME/.config/opencode/agents"
+  local fleet_f fleet_base
+  for fleet_f in "$fleet_src_dir"/*.md; do
+    fleet_base="$(basename "$fleet_f")"
+    act "symlink $fleet_target_dir/$fleet_base -> $fleet_f" ln -s "$fleet_f" "$fleet_target_dir/$fleet_base"
+  done
 
   # Merge the chosen profile into ~/.config/opencode/opencode.jsonc,
   # preserving every existing key (provider entries, mcp block, etc.)
